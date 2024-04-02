@@ -212,6 +212,9 @@
 /// ```
 pub mod datetime;
 
+/// Contains various parsers for natural language expressions.
+mod natural_language;
+
 /// Timezone offset string parser
 ///
 /// ```

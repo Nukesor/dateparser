@@ -1,12 +1,16 @@
 #![allow(deprecated)]
-use crate::timezone;
 use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
 
+use crate::{natural_language, timezone};
+
 /// Parse struct has methods implemented parsers for accepted formats.
-pub struct Parse<'z, Tz2> {
+pub struct Parse<'z, Tz2>
+where
+    Tz2: TimeZone,
+{
     tz: &'z Tz2,
     default_time: Option<NaiveTime>,
 }
@@ -26,6 +30,7 @@ where
     pub fn parse(&self, input: &str) -> Result<DateTime<Utc>> {
         self.unix_timestamp(input)
             .or_else(|| self.rfc2822(input))
+            .or_else(|| self.rfc2822(input))
             .or_else(|| self.ymd_family(input))
             .or_else(|| self.hms_family(input))
             .or_else(|| self.month_ymd(input))
@@ -36,6 +41,7 @@ where
             .or_else(|| self.dot_mdy_or_ymd(input))
             .or_else(|| self.mysql_log_timestamp(input))
             .or_else(|| self.chinese_ymd_family(input))
+            .or_else(|| self.natural_english(input))
             .unwrap_or_else(|| Err(anyhow!("{} did not match any formats.", input)))
     }
 
@@ -792,6 +798,17 @@ where
             .and_then(|datetime| self.tz.from_local_datetime(&datetime).single())
             .map(|at_tz| at_tz.with_timezone(&Utc))
             .map(Ok)
+    }
+
+    /// English natural language
+    /// - "3 weeks ago"
+    /// - "in 5 days"
+    /// - "friday [at] 2pm"
+    /// - "friday [at] 2.15pm"
+    /// - "friday [at] 14:20"
+    /// - "friday [at] 0850"
+    fn natural_english(&self, input: &str) -> Option<Result<DateTime<Utc>>> {
+        natural_language::english::parse(self.tz, input)
     }
 }
 

@@ -1,0 +1,44 @@
+COMMA = _{ "," }
+
+and = _{ "and"? }
+
+// Parse a number of time units
+second = { ASCII_DIGIT+ ~ "^second" ~ "s"? }
+minute = { ASCII_DIGIT+ ~ "^minute" ~ "s"? }
+hour = { ASCII_DIGIT+ ~ "^hour" ~ "s"? }
+day = { ASCII_DIGIT+ ~ "^day" ~ "s"? }
+month = { ASCII_DIGIT+ ~ "^month" ~ "s"? }
+year = { ASCII_DIGIT+ ~ "^year" ~ "s"? }
+
+// Weekdays
+monday = { ^"monday" }
+tuesday = { ^"tuesday" }
+wednesday = { ^"wednesday" }
+thursday = { ^"thursday" }
+friday = { ^"friday" }
+saturday = { ^"saturday" }
+sunday = { ^"sunday" }
+
+weekday = { monday | tuesday | wednesday | thursday | friday | saturday | sunday }
+
+// Time parsing
+time_hour = { ASCII_DIGIT{1, 2} }
+time_minute = { ASCII_DIGIT{2} }
+
+// American time - 1pm, 230pm, 0400pm, 05.00am
+pm = { ^"pm" }
+am = { ^"am" }
+american = { time_hour ~ "."? ~ time_minute? ~ ( am | pm ) }
+
+// European time - 2400, 18:00, 8:20
+european = { time_hour ~ ":"? ~ time_minute }
+
+time = { american | european }
+
+// Final allowed expressions
+past_timedelta = { year? ~ and ~ month? ~ and ~ day? ~ and ~ hour? ~ and ~ minute? ~ and ~ second? ~ "ago" }
+future_timedelta = { "in" ~ year? ~ and ~ month? ~ and ~ day? ~ and ~ hour? ~ and ~ minute? ~ and ~ second? }
+relative_absolute_time = { weekday ~ "at"? ~ time }
+
+// Syntax
+expression = { past_timedelta | future_timedelta | relative_absolute_time }
